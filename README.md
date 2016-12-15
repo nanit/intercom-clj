@@ -6,20 +6,20 @@ A Clojure library for [Intercom's REST API](https://developers.intercom.com/refe
 
 1. Put the following dependency in your `project.clj`
 
-```clojure
+```clj
 [intercom-clj "0.1.0"]
 ```
 
 2. Set the  [Personal Access Token](https://developers.intercom.com/reference#section-using-personal-access-tokens) via:
 
-```clojure
+```clj
 (require '[intercom-clj.core :refer [set-access-token!]])
 (set-access-token! "MY-ACCESS-TOKEN")
 ```
 Or the `INTERCOM_ACCESS_TOKEN` environment variable.
 
 3. Start making API calls:
-```clojure
+```clj
 (require '[intercom-clj.users :as users])
 (users/show {:user_id 123123123})
 (users/show {:email "my@email.com"})
