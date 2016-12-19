@@ -7,7 +7,7 @@ A Clojure library for [Intercom's REST API](https://developers.intercom.com/refe
 1) Put the following dependency in your `project.clj`
 
 ```clj
-[intercom-clj "0.1.1"]
+[intercom-clj "0.1.2"]
 ```
 
 2) Set the  [Personal Access Token](https://developers.intercom.com/reference#section-using-personal-access-tokens) via:
