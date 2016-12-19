@@ -36,7 +36,7 @@
   [req]
   (let [{:keys [status body]} @req
         body (parse-string body true)]
-    (if (= 200 status) 
+    (if (<= 200 status 299)
       body
       (throw (Exception. (str "Bad API request:" body))))))
 

@@ -24,6 +24,10 @@ Or the `INTERCOM_ACCESS_TOKEN` environment variable.
 (users/show {:user_id 123123123})
 (users/show {:email "my@email.com"})
 (users/create {:email "my@email.com" :user_id 123 :name "John Doe"})
+(require '[intercom-clj.events :as events])
+(events/create {:user_id 1} "plan-upgraded")
+(events/create {:email "my@email.com"} "plan-upgraded" {:old_plan "Basic" :new_plan "Enterprise"})
+(events/list {:user_id 1})
 ```
 
 You get the point :)
