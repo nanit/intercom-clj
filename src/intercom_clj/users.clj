@@ -21,10 +21,22 @@
   (GET (format "/users/%s" id)))
 
 (defn list 
-  "lists all users
+  "lists users
   For arguments see https://developers.intercom.com/reference#list-users" 
   ([] (list {}))
   ([args] (GET "/users" args)))
+
+(defn all
+  "Receives all users by iterating all users pages"
+  []
+  (loop [acc []
+         current-page 1]
+    (let [res (:body (list {:page current-page}))
+          new-acc (vec (concat acc (:users res)))]
+      (if (-> res :pages :next)
+        (recur new-acc
+               (inc current-page))
+        new-acc))))
 
 (defn delete
   "Deletes a user from Intercom
