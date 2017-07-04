@@ -34,11 +34,8 @@
 
 (defn- parse-response
   [req]
-  (let [{:keys [status body]} @req
-        body (parse-string body true)]
-    (if (<= 200 status 299)
-      body
-      (throw (Exception. (str "Bad API request:" body))))))
+  (let [{:keys [status body]} @req]
+    {:status status :body (parse-string body true)}))
 
 (defn- request 
   "Launches an HTTP request to Intercom's API" 
@@ -52,5 +49,10 @@
 
 (defn GET 
   "Launches a GET request to Intercom's API" 
-  [path query-params]
-  (request http/get path {:query-params query-params}))
+  ([path] (GET path {}))
+  ([path query-params] (request http/get path {:query-params query-params})))
+
+(defn DELETE 
+  "Launches a DELETE request to Intercom's API" 
+  ([path] (DELETE path {}))
+  ([path query-params] (request http/delete path {:query-params query-params})))
