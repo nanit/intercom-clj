@@ -7,7 +7,7 @@ A Clojure library for [Intercom's REST API](https://developers.intercom.com/refe
 1) Put the following dependency in your `project.clj`
 
 ```clj
-[intercom-clj "0.1.2"]
+[intercom-clj "0.2.0"]
 ```
 
 2) Set the  [Personal Access Token](https://developers.intercom.com/reference#section-using-personal-access-tokens) via:
@@ -24,6 +24,8 @@ Or the `INTERCOM_ACCESS_TOKEN` environment variable.
 (users/show {:user_id 123123123})
 (users/show {:email "my@email.com"})
 (users/create {:email "my@email.com" :user_id 123 :name "John Doe"})
+(users/update {:email "my@email.com" :custom_attributes {:some "value"})
+(users/delete {:email "my@email.com"})
 (require '[intercom-clj.events :as events])
 (events/create {:user_id 1} "plan-upgraded")
 (events/create {:email "my@email.com"} "plan-upgraded" {:old_plan "Basic" :new_plan "Enterprise"})
