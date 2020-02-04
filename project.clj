@@ -1,4 +1,4 @@
-(defproject intercom-clj "0.2.1"
+(defproject intercom-clj "0.2.2"
   :description "A Clojure native library to use the Intercom REST API"
   :url "https://github.com/nanit/intercom-clj"
   :license {:name "Eclipse Public License"
