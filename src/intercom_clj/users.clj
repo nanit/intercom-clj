@@ -26,17 +26,33 @@
   ([] (list {}))
   ([args] (GET "/users" args)))
 
+(defn scroll 
+  "scrolls users
+  docs: https://developers.intercom.com/intercom-api-reference/v1.0/reference#iterating-over-all-users"
+  ([] (scroll nil))
+  ([scroll-param] 
+   (let [query-params (if scroll-param {:scroll_param scroll-param} {})]
+     (GET "/users/scroll" query-params))))
+
 (defn all
-  "Receives all users by iterating all users pages"
-  []
-  (loop [acc []
-         current-page 1]
-    (let [res (:body (list {:page current-page}))
-          new-acc (vec (concat acc (:users res)))]
-      (if (-> res :pages :next)
-        (recur new-acc
-               (inc current-page))
-        new-acc))))
+  "Receives all users by iterating all users pages
+  Use num-pages to limit the number of scroll iterations
+  Uses the scroll API
+  docs: https://developers.intercom.com/intercom-api-reference/v1.0/reference#iterating-over-all-users"
+  ([] (all nil))
+  ([page-limit]
+   (loop [pages-left page-limit
+          acc []
+          scroll-param nil]
+     (if (or (nil? pages-left) (pos-int? pages-left 0))
+       (let [res (:body (scroll scroll-param))
+             new-acc (vec (concat acc (:users res)))]
+         (if (not-empty (:users res))
+           (recur (when pages-left (dec pages-left))
+                  new-acc
+                  (:scroll_param res))
+           new-acc))
+       acc))))
 
 (defn delete
   "Deletes a user from Intercom
