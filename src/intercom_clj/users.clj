@@ -1,5 +1,6 @@
 (ns intercom-clj.users
-  (:require [intercom-clj.core :refer [POST GET DELETE]])
+  (:require [intercom-clj.core :refer [POST GET DELETE]]
+            [taoensso.timbre :refer [info]])
   (:refer-clojure :exclude [update list]))
 
 (defn create 
@@ -32,11 +33,11 @@
   ([] (scroll nil))
   ([scroll-param] 
    (let [query-params (if scroll-param {:scroll_param scroll-param} {})]
-     (GET "/users/scroll" query-params))))
+     (GET "/users/scroll" query-params {:timeout 20000}))))
 
 (defn all
   "Receives all users by iterating all users pages
-  Use num-pages to limit the number of scroll iterations
+  Use page-limit to limit the number of scroll iterations
   Uses the scroll API
   docs: https://developers.intercom.com/intercom-api-reference/v1.0/reference#iterating-over-all-users"
   ([] (all nil))
@@ -44,7 +45,8 @@
    (loop [pages-left page-limit
           acc []
           scroll-param nil]
-     (if (or (nil? pages-left) (pos-int? pages-left 0))
+     (info "INTERCOM_SCROLL_FETCHED" (count acc) "users")
+     (if (or (nil? pages-left) (> pages-left 0))
        (let [res (:body (scroll scroll-param))
              new-acc (vec (concat acc (:users res)))]
          (if (not-empty (:users res))
