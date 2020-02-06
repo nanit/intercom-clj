@@ -33,12 +33,24 @@
   [path]
   (str base-url path))
 
+(defn- safe-json-parse
+  "Parses response body as json
+  Returns the original body on parse error"
+  [v]
+  (try (parse-string v true)
+       (catch Exception e 
+         (log/error "JSON_PARSE_EXCEPTION" {:error_message (.getMessage e)
+                                            :original_body v})
+         v)))
+
 (defn- parse-response
   [req]
   (let [{:keys [status body error]} @req]
     (if error
-      (log/error "INTERCOM_REQUEST_ERROR" error)
-      {:status status :body (parse-string body true)})))
+      (log/error "INTERCOM_HTTP_ERROR" error)
+      (let [parsed {:status status :body (safe-json-parse body)}]
+        (do (when (>= status 400) (log/error "INTERCOM_BAD_RESPONSE" parsed)) 
+            parsed)))))
 
 (defn- request 
   "Launches an HTTP request to Intercom's API" 

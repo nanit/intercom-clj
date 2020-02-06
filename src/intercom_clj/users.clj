@@ -1,6 +1,6 @@
 (ns intercom-clj.users
   (:require [intercom-clj.core :refer [POST GET DELETE]]
-            [taoensso.timbre :refer [info]])
+            [taoensso.timbre :refer [info] :as log])
   (:refer-clojure :exclude [update list]))
 
 (defn create 
@@ -47,14 +47,20 @@
           scroll-param nil]
      (info "INTERCOM_SCROLL_FETCHED" (count acc) "users")
      (if (or (nil? pages-left) (> pages-left 0))
-       (let [res (:body (scroll scroll-param))
-             new-acc (vec (concat acc (:users res)))]
-         (if (not-empty (:users res))
-           (recur (when pages-left (dec pages-left))
-                  new-acc
-                  (:scroll_param res))
-           new-acc))
-       acc))))
+       (let [{:keys [body status]} (scroll scroll-param)]
+         (if (= 200 status)
+           (let [users (:users body)]
+             (if (empty? users)
+               acc
+               (recur (when pages-left (dec pages-left))
+                      (vec (concat acc users))
+                      (:scroll_param body))))
+           (do (log/error "INTERCOM_REQUEST_FAILED" status body)
+               (Thread/sleep 3)
+               (recur pages-left
+                      acc
+                      scroll-param))))
+     acc))))
 
 (defn delete
   "Deletes a user from Intercom
