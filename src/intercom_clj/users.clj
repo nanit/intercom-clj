@@ -1,5 +1,6 @@
 (ns intercom-clj.users
-  (:require [intercom-clj.core :refer [POST GET DELETE]])
+  (:require [intercom-clj.core :refer [POST GET DELETE]]
+            [taoensso.timbre :refer [info] :as log])
   (:refer-clojure :exclude [update list]))
 
 (defn create 
@@ -26,17 +27,40 @@
   ([] (list {}))
   ([args] (GET "/users" args)))
 
+(defn scroll 
+  "scrolls users
+  docs: https://developers.intercom.com/intercom-api-reference/v1.0/reference#iterating-over-all-users"
+  ([] (scroll nil))
+  ([scroll-param] 
+   (let [query-params (if scroll-param {:scroll_param scroll-param} {})]
+     (GET "/users/scroll" query-params {:timeout 20000}))))
+
 (defn all
-  "Receives all users by iterating all users pages"
-  []
-  (loop [acc []
-         current-page 1]
-    (let [res (:body (list {:page current-page}))
-          new-acc (vec (concat acc (:users res)))]
-      (if (-> res :pages :next)
-        (recur new-acc
-               (inc current-page))
-        new-acc))))
+  "Receives all users by iterating all users pages
+  Use page-limit to limit the number of scroll iterations
+  Uses the scroll API
+  docs: https://developers.intercom.com/intercom-api-reference/v1.0/reference#iterating-over-all-users"
+  ([] (all nil))
+  ([page-limit]
+   (loop [pages-left page-limit
+          acc []
+          scroll-param nil]
+     (info "INTERCOM_SCROLL_FETCHED" (count acc) "users")
+     (if (or (nil? pages-left) (> pages-left 0))
+       (let [{:keys [body status]} (scroll scroll-param)]
+         (if (= 200 status)
+           (let [users (:users body)]
+             (if (empty? users)
+               acc
+               (recur (when pages-left (dec pages-left))
+                      (vec (concat acc users))
+                      (:scroll_param body))))
+           (do (log/error "INTERCOM_REQUEST_FAILED" status body)
+               (Thread/sleep 3)
+               (recur pages-left
+                      acc
+                      scroll-param))))
+     acc))))
 
 (defn delete
   "Deletes a user from Intercom

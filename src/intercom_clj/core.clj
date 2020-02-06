@@ -1,5 +1,6 @@
 (ns intercom-clj.core
   (:require [org.httpkit.client :as http]
+            [taoensso.timbre :as log]
             [cheshire.core :refer [generate-string parse-string]]))
 
 (def access-token (atom nil))
@@ -32,10 +33,24 @@
   [path]
   (str base-url path))
 
+(defn- safe-json-parse
+  "Parses response body as json
+  Returns the original body on parse error"
+  [v]
+  (try (parse-string v true)
+       (catch Exception e 
+         (log/error "JSON_PARSE_EXCEPTION" {:error_message (.getMessage e)
+                                            :original_body v})
+         v)))
+
 (defn- parse-response
   [req]
-  (let [{:keys [status body]} @req]
-    {:status status :body (parse-string body true)}))
+  (let [{:keys [status body error]} @req]
+    (if error
+      (log/error "INTERCOM_HTTP_ERROR" error)
+      (let [parsed {:status status :body (safe-json-parse body)}]
+        (do (when (>= status 400) (log/error "INTERCOM_BAD_RESPONSE" parsed)) 
+            parsed)))))
 
 (defn- request 
   "Launches an HTTP request to Intercom's API" 
@@ -50,7 +65,8 @@
 (defn GET 
   "Launches a GET request to Intercom's API" 
   ([path] (GET path {}))
-  ([path query-params] (request http/get path {:query-params query-params})))
+  ([path query-params] (GET path query-params {}))
+  ([path query-params opts] (request http/get path (assoc opts :query-params query-params))))
 
 (defn DELETE 
   "Launches a DELETE request to Intercom's API" 
